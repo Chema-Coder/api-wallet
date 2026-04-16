@@ -1,3 +1,15 @@
 spring:
   application:
     name: api-wallet
+  datasource:
+    url: jdbc:postgresql://localhost:5433/wallet_db
+    username: wallet_user
+    password: wallet_password
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
