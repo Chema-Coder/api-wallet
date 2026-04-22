@@ -1,12 +1,15 @@
 package com.chemacoder.api_wallet.entity;
 
 import jakarta.persistence.*;
+import lombok.Data;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
 @Table(name = "wallets")
+@Data
 public class Wallet {
 
     @Id
@@ -19,7 +22,7 @@ public class Wallet {
     @Column(nullable = false, precision = 19, scale = 4)
     private BigDecimal balance;
 
-    @Column(name = "created_at", nullable = false, updatable = false)
+    @Column(nullable = false, name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
     public Wallet() {
