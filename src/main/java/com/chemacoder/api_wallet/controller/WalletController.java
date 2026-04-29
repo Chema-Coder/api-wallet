@@ -1,5 +1,6 @@
 package com.chemacoder.api_wallet.controller;
 
+import com.chemacoder.api_wallet.dto.DepositRequest;
 import com.chemacoder.api_wallet.entity.Wallet;
 import com.chemacoder.api_wallet.service.WalletService;
 import org.springframework.http.ResponseEntity;
@@ -40,5 +41,22 @@ public class WalletController {
         return walletService.getWalletById(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
+    }
+
+    /**
+     * Deposits an amount into an existing wallet.
+     *
+     * @param id The UUID of the wallet.
+     * @param request The deposit request containing the amount.
+     * @return ResponseEntity containing the updated Wallet, or 400 Bad Request on error.
+     */
+    @PostMapping("/{id}/deposit")
+    public ResponseEntity<Wallet> depositToWallet(@PathVariable UUID id, @RequestBody DepositRequest request) {
+        try {
+            Wallet updatedWallet = walletService.deposit(id, request.amount());
+            return ResponseEntity.ok(updatedWallet);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().build();
+        }
     }
 }

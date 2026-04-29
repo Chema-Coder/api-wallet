@@ -40,4 +40,26 @@ public class WalletService {
     public Optional<Wallet> getWalletById(UUID id) {
         return walletRepository.findById(id);
     }
+
+    /**
+     * Deposits a specific amount into a wallet.
+     *
+     * @param id The UUID of the wallet.
+     * @param amount The amount to deposit (must be greater than zero).
+     * @return The updated Wallet.
+     * @throws IllegalArgumentException if the wallet is not found or the amount is invalid.
+     */
+    public Wallet deposit(UUID id, BigDecimal amount) {
+        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("Deposit amount must be greater than zero");
+        }
+
+        Wallet wallet = walletRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Wallet not found"));
+
+        BigDecimal newBalance = wallet.getBalance().add(amount);
+        wallet.setBalance(newBalance);
+
+        return walletRepository.save(wallet);
+    }
 }
