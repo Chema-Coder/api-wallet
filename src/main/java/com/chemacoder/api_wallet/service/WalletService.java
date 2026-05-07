@@ -62,4 +62,30 @@ public class WalletService {
 
         return walletRepository.save(wallet);
     }
+
+    /**
+     * Withdraws a specific amount from a wallet.
+     *
+     * @param id The UUID of the wallet.
+     * @param amount The amount to withdraw (must be greater than zero and within available balance).
+     * @return The updated Wallet.
+     * @throws IllegalArgumentException if wallet not found, amount is invalid, or funds are insufficient.
+     */
+    public Wallet withdraw(UUID id, BigDecimal amount) {
+        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("Withdrawal amount must be greater than zero");
+        }
+
+        Wallet wallet = walletRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Wallet not found"));
+
+        if (wallet.getBalance().compareTo(amount) < 0) {
+            throw new IllegalArgumentException("Insufficient funds");
+        }
+
+        BigDecimal newBalance = wallet.getBalance().subtract(amount);
+        wallet.setBalance(newBalance);
+
+        return walletRepository.save(wallet);
+    }
 }
