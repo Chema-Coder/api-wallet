@@ -1,6 +1,9 @@
 package com.chemacoder.api_wallet.service;
 
+import com.chemacoder.api_wallet.entity.Transaction;
+import com.chemacoder.api_wallet.entity.TransactionType;
 import com.chemacoder.api_wallet.entity.Wallet;
+import com.chemacoder.api_wallet.repository.TransactionRepository;
 import com.chemacoder.api_wallet.repository.WalletRepository;
 import org.springframework.stereotype.Service;
 
@@ -13,17 +16,13 @@ import java.util.UUID;
 public class WalletService {
 
     private final WalletRepository walletRepository;
+    private final TransactionRepository transactionRepository;
 
-    public WalletService(WalletRepository walletRepository) {
+    public WalletService(WalletRepository walletRepository, TransactionRepository transactionRepository) {
         this.walletRepository = walletRepository;
+        this.transactionRepository = transactionRepository;
     }
 
-    /**
-     * Creates a new wallet with a default zero balance.
-     *
-     * @param walletRequest The wallet data containing the user's email.
-     * @return The persisted Wallet entity.
-     */
     public Wallet createWallet(Wallet walletRequest) {
         walletRequest.setBalance(BigDecimal.ZERO);
         walletRequest.setCreatedAt(LocalDateTime.now());
@@ -31,24 +30,10 @@ public class WalletService {
         return walletRepository.save(walletRequest);
     }
 
-    /**
-     * Retrieves a wallet by its unique identifier.
-     *
-     * @param id The UUID of the wallet.
-     * @return An Optional containing the Wallet if found, or empty if not.
-     */
     public Optional<Wallet> getWalletById(UUID id) {
         return walletRepository.findById(id);
     }
 
-    /**
-     * Deposits a specific amount into a wallet.
-     *
-     * @param id The UUID of the wallet.
-     * @param amount The amount to deposit (must be greater than zero).
-     * @return The updated Wallet.
-     * @throws IllegalArgumentException if the wallet is not found or the amount is invalid.
-     */
     public Wallet deposit(UUID id, BigDecimal amount) {
         if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
             throw new IllegalArgumentException("Deposit amount must be greater than zero");
@@ -57,20 +42,19 @@ public class WalletService {
         Wallet wallet = walletRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Wallet not found"));
 
-        BigDecimal newBalance = wallet.getBalance().add(amount);
-        wallet.setBalance(newBalance);
+        wallet.setBalance(wallet.getBalance().add(amount));
+
+        Transaction transaction = new Transaction();
+        transaction.setType(TransactionType.DEPOSIT);
+        transaction.setAmount(amount);
+        transaction.setTimestamp(LocalDateTime.now());
+        transaction.setWallet(wallet);
+
+        wallet.getTransactions().add(transaction);
 
         return walletRepository.save(wallet);
     }
 
-    /**
-     * Withdraws a specific amount from a wallet.
-     *
-     * @param id The UUID of the wallet.
-     * @param amount The amount to withdraw (must be greater than zero and within available balance).
-     * @return The updated Wallet.
-     * @throws IllegalArgumentException if wallet not found, amount is invalid, or funds are insufficient.
-     */
     public Wallet withdraw(UUID id, BigDecimal amount) {
         if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
             throw new IllegalArgumentException("Withdrawal amount must be greater than zero");
@@ -83,8 +67,15 @@ public class WalletService {
             throw new IllegalArgumentException("Insufficient funds");
         }
 
-        BigDecimal newBalance = wallet.getBalance().subtract(amount);
-        wallet.setBalance(newBalance);
+        wallet.setBalance(wallet.getBalance().subtract(amount));
+
+        Transaction transaction = new Transaction();
+        transaction.setType(TransactionType.WITHDRAW);
+        transaction.setAmount(amount);
+        transaction.setTimestamp(LocalDateTime.now());
+        transaction.setWallet(wallet);
+
+        wallet.getTransactions().add(transaction);
 
         return walletRepository.save(wallet);
     }
